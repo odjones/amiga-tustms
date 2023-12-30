@@ -1,0 +1,95 @@
+;
+; Macros to automate the opening and closing of libraries, and to aid the
+; labelling of the name of the library, and it's base address.
+;
+; These macros require that you have the following include files included
+; in your main source file before you use them:
+;
+; EXEC/EXEC_LIB.I or /SYSTEM.GS
+;
+; Syntax of macros in this file:
+;
+; OpenLib <Library> [,<Version>]
+;
+; Opens a named library with an optional version number. If the version
+; number is not supplied, the label Version will be checked to see if it
+; exists. If it does, the value contained in Version will be used, otherwise
+; the default value of zero will be used.
+;
+; CloseLib <Library>
+;
+; Closes a named library.
+;
+; LibName <Library>,<Intuition Constant>
+;
+; Inserts the library name (obtained from the constants file for the relevent
+; library) and labels it correctly, so that it can be accessed by OpenLib and
+; CloseLib.
+;
+; Library <Library>
+;
+; Inserts a longword into the object code, and labels it correctly for the
+; library name, so that it can be accessed by OpenLib and CloseLib.
+;
+;----------------------------------------------------------------------------
+
+OpenLib   macro
+          lea       _\1Name(pc),a1      attempt to open library
+          ifnc      "","\2"             ;
+          moveq     #\2,d0              insert version number if present
+          else                          ;
+          ifd       Version             ;
+          moveq     #Version,d0         else insert Version label if present
+          else                          ;
+          moveq     #0,d0               else insert a null value
+          endc                          ;
+          endc                          ;
+          CALLEXEC  OpenLibrary         ;
+          move.l    d0,_\1Base          keep base address
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 20 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+CloseLib  macro
+          move.l    _\1Base(pc),a1      close library
+          CALLEXEC  CloseLibrary        ;
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 12 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+LibName   macro
+_\1Name   \2
+          endm
+
+;----------------------------------------------------------------------------
+;
+; The number of bytes added is the length of the Intuition constant plus one.
+;
+;----------------------------------------------------------------------------
+
+Library   macro
+_\1Base   dc.l      0
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 4-5 bytes added whenever this macro is used.
+;
+
+CALLDOS   macro
+          move.l    _DOSBase(pc),a6
+          jsr       _LVO\1(a6)
+          endm
+
+CALLEXEC  macro
+          move.l    4.w,a6
+          jsr       _LVO\1(a6)
+          endm

@@ -1,0 +1,155 @@
+;
+; Macros to automate the opening and closing of files, also any read/write
+; operations on the files. You can also define filenames and handles easily
+; and neatly.
+;
+; These macros require that you have the following include files included
+; in your main source file before you use them:
+;
+; EXEC/EXEC_LIB.I or /SYSTEM.GS
+;
+; Syntax of macros in this file:
+;
+; Open <File>,<Access mode>
+;
+; Opens a file with a given access mode.
+;
+; Close <File handle>
+;
+; Closes an open file by using it's file handle.
+;
+; WaitChar <File handle>,<Timeout>
+;
+; Waits for a character on the specifies file handle.
+;
+; Read <File handle>,<Buffer>,<Length>
+;
+; Reads a specific number of bytes of data from an open file into a buffer.
+;
+; Write <File handle>,<Buffer>,<Length>
+;
+; Writes a buffer of a specific size to an open file.
+;
+; GetInput <Label>
+;
+; Obtains the default input handle, and stores it in the handle variable.
+;
+; GetOutput <Label>
+;
+; Obtains the default output handle, and stores it in the handle variable.
+;
+; File <Label>
+;
+; Inserts a longword into the object code, and labels it correctly for the
+; file name, so that it can be accessed by the above macros.
+;
+; Delay <Delay in 50ths of a second>
+;
+; Delays your code for a specified time delay.
+;
+;----------------------------------------------------------------------------
+
+Open      macro
+          move.l    #\1,d1
+          move.l    #MODE_\2,d2
+          CALLDOS   Open
+          move.l    d0,\1Handle
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 28 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+Close     macro
+          move.l    \1Handle(pc),d1
+          CALLDOS   Close
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 14 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+WaitChar  macro
+          move.l    \1Handle(pc),d1
+          move.l    \2,d2
+          CALLDOS   WaitForChar
+          tst.l     d0
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 18 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+Read      macro
+          move.l    \1Handle(pc),d1
+          move.l    \2,d2
+          move.l    \3,d3
+          CALLDOS   Read
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 24-26 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+Write     macro
+          move.l    \1Handle(pc),d1
+          move.l    \2,d2
+          move.l    \3,d3
+          CALLDOS   Write
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 24-26 bytes added whevener this macro is used.
+;
+;----------------------------------------------------------------------------
+
+GetInput  macro
+          CALLDOS   Input
+          move.l    d0,\1Handle
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 16 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+GetOutput macro
+          CALLDOS   Output
+          move.l    d0,\1Handle
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 16 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+File      macro
+\1Handle  dc.l      0
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 4 bytes added whenever this macro is used.
+;
+;----------------------------------------------------------------------------
+
+Delay     macro
+          move.l    \1,d1
+          CALLDOS   Delay
+          endm
+
+;----------------------------------------------------------------------------
+;
+; 12-16 bytes added whenever this macro is used.
+;

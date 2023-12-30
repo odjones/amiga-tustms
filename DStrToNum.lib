@@ -1,0 +1,49 @@
+;
+; Routine to convert a string of decimal digits into a longword number. Any
+; alpha bytes in the string are detected and registered in D0.
+;
+; Synopsis: DStrToNum(String, Length)
+;                     A1      D1
+;
+; Returns: D0 = Successful (0 means successful, -1 means that alpha bytes in
+;               the string rendered the number unconvertable.
+;          D1 = If D0 is 0, then this is the longword number value of string.
+;
+; Warning: Your program MUST act upon D0 if the value supplied is -1. If D0
+;          contains -1, D1 will only contain the number count up to the byte
+;          which did not contain a number.
+;
+;----------------------------------------------------------------------------
+
+DStrToNum move.l    a1,a2               calculate end address of the string
+          add.l     d1,a2               ;
+          subq.l    #1,a2               ;
+          moveq     #1,d2               initialise column index
+          moveq     #0,d1               initialise number
+.convert  move.b    (a2),d3             get a character
+          cmp.b     #48,d3              check to see if it is a number
+          blt.s     alphabyte           ;
+          cmp.b     #57,d3              ;
+          bgt.s     alphabyte           ;
+          sub.b     #48,d3              ;
+          beq.s     .nextcol            ;
+.getnum   add.l     d2,d1               add column index to total
+          subq.b    #1,d3               take away one from string
+          bne.s     .getnum             ;
+.nextcol  cmp.l     a2,a1               end of string?
+          beq.s     .finished           ;
+          subq.l    #1,a2               move onto next character
+          move.l    d2,d4               multiply column index by 10
+          moveq     #8,d5               ;
+.multiply add.l     d4,d2               ;
+          dbra      d5,.multiply        ;
+          bra.s     .convert            ;
+.finished moveq     #0,d0               successful
+          rts                           ;
+alphabyte moveq     #-1,d0              unsuccessful
+          rts                           ;
+
+;----------------------------------------------------------------------------
+;
+; Assembles into 62 bytes of machine code.
+;

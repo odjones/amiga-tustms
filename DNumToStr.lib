@@ -1,0 +1,43 @@
+;
+; Routine to convert a longword into a decimal number string.
+;
+; Synopsis: DNumToStr(Number, String of 10 bytes)
+;                     D1      A1
+;
+; Returns: None.
+;
+;----------------------------------------------------------------------------
+
+DNumToStr lea       _DecTable(pc),a2    get address of conversion table
+          moveq     #0,d0               initialise counter
+.prepare  move.b    #48,(a1)            ;
+          move.l    (a2),d2             get a number
+.check    cmp.l     d2,d1               does it need converting?
+          bge.s     .convert            ;
+          btst.l    #31,d1              ;
+          beq.s     .nextnum            ;
+.convert  sub.l     d2,d1               subtract number we are converting
+          add.b     #1,(a1)             ;
+          bra.s     .check              repeat until number is too small
+.nextnum  addq.l    #1,a1               move onto next character in string
+          addq.l    #4,a2               move onto next number in table
+          addq.b    #1,d0               ;
+          cmp.b     #10,d0              finished?
+          bne.s     .prepare            ;
+          rts                           ;
+
+_DecTable dc.l      1000000000
+          dc.l      100000000
+          dc.l      10000000
+          dc.l      1000000
+          dc.l      100000
+          dc.l      10000
+          dc.l      1000
+          dc.l      100
+          dc.l      10
+          dc.l      1
+
+;----------------------------------------------------------------------------
+;
+; Assembles into 82 bytes of machine code.
+;
